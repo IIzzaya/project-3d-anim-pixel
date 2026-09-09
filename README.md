@@ -2,6 +2,8 @@
 
 参考仓库中的 `ref.mp4`，用可旋转的程序化 3D 场景重建蓝色光球精灵、两对半透明翅膀、振翅和悬浮，再叠加像素、抖色、辉光、色散与颗粒效果。
 
+**线上地址**：<https://iizzaya.github.io/project-3d-anim-pixel/>（嵌入个人网站画廊 <https://iizzaya.github.io/projects/luma-pixel/>）
+
 ## 启动
 
 需要 Node.js 22.13 或更新版本。
@@ -11,10 +13,11 @@ npm ci
 npm run dev
 ```
 
-打开终端显示的 Local 地址。开发服务器默认从 3000 端口开始，端口占用时会自动选择下一个端口。
+打开终端显示的 Local 地址。开发服务器默认从 3000 端口开始，端口占用时会自动选择下一个端口。因 `next.config.ts` 配置了 GitHub Pages 的 `basePath: '/project-3d-anim-pixel'`，本地访问需带上该前缀（如 `http://localhost:3000/project-3d-anim-pixel/`）。
 
 ```sh
 npm run build      # 生产构建
+npm run prerender  # 冻结 SSR HTML 到 dist/client/project-3d-anim-pixel/（部署用）
 npm start          # 本地运行生产 Worker
 npm run typecheck  # TypeScript 检查
 npm run lint       # 应用与测试代码检查
@@ -23,6 +26,12 @@ npm run test:gpu   # 原生 GPU 集成测试，需要可用的 WebGPU 适配器
 ```
 
 项目已使用 Git 管理；`ref.mp4` 保留为原始参考。`node_modules`、构建产物、临时参考帧和测试输出不入库。
+
+## 部署
+
+推送 `main` 分支后由 `.github/workflows/deploy.yml` 自动部署到 GitHub Pages：`npm ci` → typecheck → test → `npm run build`（vinext 构建 Worker）→ `npm run prerender`（启动构建产物 Worker，冻结 SSR HTML 并复制 public 资源到 `dist/client/project-3d-anim-pixel/`）→ 上传该目录为 Pages artifact。
+
+采用「basePath + 运行时冻结 SSR HTML」方案，因为 vinext（beta.5～beta.9）的 `basePath` 与 `output: 'export'` 不能同用；`public/` 资源在 JSX 中一律通过 `lib/paths.ts` 的 `BASE_PATH` 常量加前缀（`next/image` 已替换为普通 `<img>`，避免依赖静态 Pages 上不存在的 `/_next/image` 优化端点）。
 
 ## 操作
 

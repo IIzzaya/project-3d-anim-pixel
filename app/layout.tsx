@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { BASE_PATH } from '@/lib/paths';
 import './globals.css';
 
 const geistSans = Geist({
@@ -15,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'LUMA · 像素精灵工作台',
   description: '探索光、像素与运动。可旋转、可调节的实时 3D 像素精灵工作台。',
+  icons: { icon: `${BASE_PATH}/favicon.svg` },
 };
 
 export default function RootLayout({

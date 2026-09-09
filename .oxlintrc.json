@@ -40,6 +40,7 @@
     "prefer-rest-params": "error",
     "prefer-spread": "error",
     "import/no-anonymous-default-export": "warn",
+    "nextjs/no-img-element": "off",
     "react/display-name": "error",
     "react/jsx-no-comment-textnodes": "error",
     "react/no-unescaped-entities": "error",
