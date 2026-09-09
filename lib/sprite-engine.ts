@@ -20,7 +20,7 @@ export function wingGeometry(): THREE.BufferGeometry {
   const rows = 40, columns = 16;
   for (let j = 0; j <= rows; j++) {
     const t = j / rows;
-    const width = Math.pow(Math.sin(Math.PI * t), 0.78) * (0.23 + t * 0.25);
+    const width = Math.pow(Math.sin(Math.PI * t), 0.78) * (0.31 + t * 0.34);
     for (let i = 0; i <= columns; i++) {
       const s = i / columns * 2 - 1;
       positions.push(t * 0.56 + s * width, t * 1.95, Math.sin(t * Math.PI) * (1 - s * s) * 0.13);
@@ -54,7 +54,7 @@ export async function createSpriteEngine(host: HTMLElement, options: EngineOptio
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#050709');
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 60);
-  camera.position.set(0, 0.6, 9);
+  camera.position.set(0, 0.6, 8.2);
   const controls = new OrbitControls(camera, canvas);
   controls.target.set(0, 0.38, 0);
   controls.enableDamping = true;
@@ -74,19 +74,19 @@ export async function createSpriteEngine(host: HTMLElement, options: EngineOptio
   const facing = dot(normalView, positionView.negate().normalize()).clamp(0, 1);
   const edgeColor = tint.rgb.mul(vec3(0.12, 0.35, 0.94));
   const middleColor = tint.mul(1.12);
-  const centerColor = mix(tint, vec3(0.91, 1, 0.93), 0.64).mul(1.5);
+  const centerColor = mix(tint, vec3(0.86, 1, 0.91), 0.56).mul(1.12);
   const cloudy = sin(normalView.x.mul(22).add(clock.mul(0.9)))
     .mul(cos(normalView.y.mul(19).sub(clock.mul(0.7)))).mul(0.035);
-  coreMat.colorNode = mix(mix(edgeColor, middleColor, smoothstep(0.02, 0.62, facing)), centerColor, smoothstep(0.5, 0.98, facing).add(cloudy));
+  coreMat.colorNode = mix(mix(edgeColor, middleColor, smoothstep(0.12, 0.83, facing)), centerColor, smoothstep(0.66, 0.98, facing).add(cloudy));
   const core = new THREE.Mesh(new THREE.SphereGeometry(0.72, 64, 40), coreMat);
   sprite.add(core);
 
   const glowMat = new THREE.SpriteNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const radial = uv().sub(0.5).length().mul(2);
   glowMat.colorNode = tint.rgb.mul(vec3(0.22, 0.55, 1));
-  glowMat.opacityNode = max(float(0), float(1).sub(radial)).pow(3).mul(0.8);
+  glowMat.opacityNode = max(float(0), float(1).sub(radial)).pow(3).mul(0.5);
   const halo = new THREE.Sprite(glowMat);
-  halo.scale.set(3.4, 3.4, 1);
+  halo.scale.set(2.3, 2.3, 1);
   sprite.add(halo);
 
   const wingMat = new THREE.MeshBasicNodeMaterial({ side: THREE.DoubleSide, transparent: true, depthWrite: false });
@@ -138,7 +138,7 @@ export async function createSpriteEngine(host: HTMLElement, options: EngineOptio
 
   const scenePass = pass(scene, camera);
   const sceneColor = scenePass.getTextureNode('output');
-  const bloomPass = bloom(sceneColor, 0.65, 0.45, 0.6);
+  const bloomPass = bloom(sceneColor, 0.2, 0.1, 0.9);
   // r186 renamed getTexture() to getTextureNode(); DefinitelyTyped still exposes the old name.
   const bloomColor = (bloomPass as typeof bloomPass & { getTextureNode(): THREE.TextureNode }).getTextureNode();
   const resolution = uniform(new THREE.Vector2(1, 1));
@@ -148,8 +148,8 @@ export async function createSpriteEngine(host: HTMLElement, options: EngineOptio
   const pixel = mix(pixelSize, float(1), smooth);
   const cells = resolution.div(pixel);
   const pixelUV = floor(uv().mul(cells)).add(0.5).div(cells);
-  const displacement = vec2(aberration.mul(pixel).div(resolution.x), 0);
-  const sample = (at: THREE.Node<'vec2'>) => sceneColor.sample(at).rgb.add(bloomColor.sample(at).rgb);
+  const displacement = vec2(aberration.mul(pixel).mul(float(1).sub(smooth)).div(resolution.x), 0);
+  const sample = (at: THREE.Node<'vec2'>) => sceneColor.sample(at).rgb.add(bloomColor.sample(at).rgb.sub(0.008).max(0));
   const composed = vec3(sample(pixelUV.add(displacement)).r, sample(pixelUV).g, sample(pixelUV.sub(displacement)).b);
   const display = renderOutput(vec4(composed, 1), THREE.NeutralToneMapping, THREE.SRGBColorSpace).rgb;
   // Analytic 4x4 Bayer matrix: 4 * Bayer2(low bits) + Bayer2(high bits).
@@ -160,17 +160,26 @@ export async function createSpriteEngine(host: HTMLElement, options: EngineOptio
   };
   const threshold = bayer2(coord).mul(4).add(bayer2(floor(coord.div(2)))).add(0.5).div(16).sub(0.5);
   const noise = fract(sin(dot(coord.add(floor(clock.mul(12))), vec2(12.9898, 78.233))).mul(43758.5453)).sub(0.5);
-  const quantized = floor(display.mul(levels).add(threshold.mul(dither).mul(1.7)).add(noise.mul(grain).mul(2)).add(0.5)).div(levels).clamp(0, 1);
+  // Keep ordered dithering on illuminated surfaces; do not raise a black background to a colored checkerboard.
+  const lit = smoothstep(0.08, 0.35, max(display.r, max(display.g, display.b)));
+  const quantized = floor(display.mul(levels).add(threshold.mul(dither).mul(1.7).mul(lit)).add(noise.mul(grain).mul(2).mul(lit)).add(0.5)).div(levels).clamp(0, 1);
   pipeline.outputColorTransform = false;
   pipeline.outputNode = vec4(mix(quantized, display, smooth), 1);
 
   let width = 1, height = 1, alive = true, frameId = 0;
+  renderer.onDeviceLost = (info) => { if (!signal.aborted) { alive = false; options.onError(`图形设备连接中断：${info.message}`); } };
+  renderer.onError = (info: unknown) => {
+    if (signal.aborted) return;
+    alive = false;
+    options.onError(typeof info === 'object' && info && 'message' in info ? String(info.message) : String(info));
+  };
   let elapsed = 0, previous = performance.now(), fpsStart = previous, frames = 0;
   const resize = () => {
     width = Math.max(1, host.clientWidth); height = Math.max(1, host.clientHeight);
     renderer.setSize(width, height);
     resolution.value.set(width * renderer.getPixelRatio(), height * renderer.getPixelRatio());
     camera.aspect = width / height;
+    camera.zoom = Math.min(1, camera.aspect / 0.85);
     camera.updateProjectionMatrix();
   };
   const observer = new ResizeObserver(resize);
@@ -187,7 +196,7 @@ export async function createSpriteEngine(host: HTMLElement, options: EngineOptio
       tint.value.set(settings.hue);
       pixelSize.value = settings.pixelSize * renderer.getPixelRatio();
       dither.value = settings.dither; levels.value = settings.colorLevels;
-      bloomPass.strength.value = settings.bloom;
+      bloomPass.strength.value = settings.bloom * 0.3;
       aberration.value = settings.aberration;
       grain.value = settings.grain;
       smooth.value = settings.smooth ? 1 : 0;
@@ -198,7 +207,7 @@ export async function createSpriteEngine(host: HTMLElement, options: EngineOptio
         const { side, pair } = wing.userData;
         const beat = Math.sin(elapsed * settings.flapSpeed * Math.PI * 2 + pair * 0.65);
         wing.rotation.y = side * (0.22 + beat * 0.72);
-        wing.rotation.z = side * (pair ? 2.48 : -0.26 + beat * 0.09);
+        wing.rotation.z = side * (pair ? -2.4 : -0.26 + beat * 0.09);
         wing.scale.setScalar(settings.wingSpan * (pair ? 0.32 : 1));
       }
       dust.count = settings.particles;
@@ -227,8 +236,8 @@ export async function createSpriteEngine(host: HTMLElement, options: EngineOptio
   frameId = requestAnimationFrame(render);
 
   return {
-    resetCamera() { camera.position.set(0, 0.6, 9); controls.target.set(0, 0.38, 0); controls.update(); },
-    setView(view: 'front' | 'side') { camera.position.set(view === 'side' ? 9 : 0, 0.6, view === 'side' ? 0 : 9); controls.update(); },
+    resetCamera() { camera.position.set(0, 0.6, 8.2); controls.target.set(0, 0.38, 0); controls.update(); },
+    setView(view: 'front' | 'side') { camera.position.set(view === 'side' ? 8.2 : 0, 0.6, view === 'side' ? 0 : 8.2); controls.update(); },
     zoom(factor: number) { const offset = camera.position.clone().sub(controls.target); offset.setLength(THREE.MathUtils.clamp(offset.length() * factor, controls.minDistance, controls.maxDistance)); camera.position.copy(controls.target).add(offset); controls.update(); },
     restart() { elapsed = 0; },
     async screenshot(): Promise<Blob> {

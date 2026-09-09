@@ -112,9 +112,7 @@ h1 > span { color: var(--primary); }
 .preset-card.selected { border-color: #98b675; box-shadow: 0 0 0 1px #c7f29a10; }
 .preset-art { height: 74px; position: relative; overflow: hidden; background: #07090b; }
 .preset-art img { position: absolute; width: 100%; height: 100%; object-fit: cover; object-position: center 41%; opacity: .85; }
-.preset-forest img { filter: hue-rotate(282deg) saturate(.65); }
-.preset-dream img { filter: hue-rotate(65deg) saturate(.8); }
-.preset-retro img { filter: hue-rotate(180deg) saturate(.65); image-rendering: pixelated; }
+.preset-art img { image-rendering: pixelated; }
 .preset-index { position: absolute; left: 9px; top: 7px; font: 9px var(--font-geist-mono), monospace; color: #777f80; }
 .preset-check { position: absolute; top: 8px; right: 8px; background: var(--primary); color: #213713; width: 15px; height: 15px; border-radius: 50%; display: grid; place-items: center; }
 .preset-description { padding: 9px 11px; display: flex; align-items: baseline; gap: 4px; justify-content: space-between; }
@@ -191,3 +189,11 @@ kbd { border: 1px solid #3a464c; border-radius: 3px; padding: 0 4px; font: 10px 
 @media (max-width: 900px) { .studio { grid-template-columns: minmax(0, 1fr) 280px; } .tool-rail { display: none; } .inspector { grid-column: 2; } .workspace { padding: 20px 16px; } .scene-number { display: none; } .timeline { display: none; } .transport { justify-content: space-between; } .preset-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .preset-art { height: 50px; } .preset-description { flex-direction: row; } .preset-description small { display: none; } .workspace-heading { margin-bottom: 18px; } h1 { font-size: 20px; } }
 @media (max-width: 680px) { .studio { height: auto; min-height: 100dvh; display: flex; flex-direction: column; } .topbar { height: 64px; padding: 0 16px; flex-shrink: 0; gap: 12px; } .brand strong { font-size: 21px; } .brand-sub { display: none; } .header-actions { gap: 6px; } .quiet-button { padding: 8px; } .quiet-button > span, .quiet-button > svg:last-child { display: none; } .export-button { padding: 9px 11px; font-size: 12px; } .workspace { padding: 22px 16px; } .viewport { flex: none; height: 53vh; min-height: 340px; max-height: 560px; } .viewport-top { left: 15px; right: 13px; } .viewport-tag { font-size: 11px; } .view-reset { font-size: 11px; } .workspace-heading { margin-bottom: 20px; } h1 { font-size: 23px; } .scene-number { display: block; font-size: 9px; } .preset-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; } .preset-art { height: 60px; } .preset-description { padding: 9px 6px; } .preset-description > span { font-size: 10px; } .presets-section { margin-top: 8px; } .inspector { border-left: 0; border-top: 1px solid var(--border); overflow: visible; } .inspector-tabs { min-height: 40px; } .inspector-scroll { overflow: visible; } .control-section { padding-left: 25px; padding-right: 25px; } .range-label label, .toggle-row { font-size: 14px; } .range-label output { font-size: 13px; } .control-heading h3 { font-size: 14px; } .inspector-tabs [data-slot=tabs-trigger] { font-size: 14px; } .control-note { font-size: 12px; } .color-swatches { gap: 20px; } .color-swatches > button, .custom-color { width: 30px; height: 30px; } .statusbar { min-height: 34px; } .status-center { display: none; } .immersive .workspace { height: 100dvh; } .immersive .viewport { height: auto; max-height: none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } .spin { animation-duration: 3s; } }
+/* Keep working controls legible while secondary frame metadata stays compact. */
+body { font-size: 16px; }
+.range-label label, .toggle-row, .inspector-tabs [data-slot=tabs-trigger], .control-heading h3, .section-heading, .preset-description > span { font-size: .875rem; }
+.range-label output, .control-note, .preset-description small, .inspector-footer > div span { font-size: .75rem; }
+.preset-description { flex-direction: column; gap: 4px; }
+.inspector-footer strong { font-size: .875rem; }
+.color-swatches > button:focus-visible, .custom-color:focus-within { outline: 2px solid var(--primary); outline-offset: 4px; }
+@media (max-width: 680px) { .preset-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .preset-art { height: 76px; } .preset-description { padding: 10px; flex-direction: row; } .preset-description small { display: block; } }
